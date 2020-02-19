@@ -1,16 +1,16 @@
 module Bluepill
   module ProcessConditions
-    class AlwaysTrue < ProcessCondition
+    class RunningTime < ProcessCondition
       def initialize(options = {})
         @below = options[:below]
       end
 
-      def run(_pid, _include_children)
-        1
+      def run(pid, _include_children)
+        System.running_time(pid)
       end
 
-      def check(_value)
-        true
+      def check(value)
+        value < @below
       end
     end
   end

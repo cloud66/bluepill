@@ -1,7 +1,6 @@
-# -*- encoding: utf-8 -*-
 module Bluepill
   class ProcessStatistics
-    STRFTIME = "%m/%d/%Y %H:%I:%S".freeze
+    STRFTIME = '%m/%d/%Y %H:%I:%S'.freeze
     EVENTS_TO_PERSIST = 10
 
     attr_reader :events
@@ -16,12 +15,11 @@ module Bluepill
     end
 
     def to_s
-      str = events.reverse.map do |(event, reason, time)|
-        "  #{event} at #{time.strftime(STRFTIME)} - #{reason || "unspecified"}"
+      str = events.reverse.collect do |(event, reason, time)|
+        "  #{event} at #{time.strftime(STRFTIME)} - #{reason || 'unspecified'}"
       end.join("\n")
 
       "event history:\n#{str}"
     end
   end
 end
-

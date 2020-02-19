@@ -1,15 +1,22 @@
-if RUBY_VERSION >= '1.9'
-  if ENV['ENABLE_SIMPLECOV']
-    require 'simplecov'
-    SimpleCov.start
-  end
-else
-  require 'rubygems'
-end
+require 'simplecov'
+require 'coveralls'
 
-require 'faker'
-require 'rspec/core'
+SimpleCov.formatters = [SimpleCov::Formatter::HTMLFormatter, Coveralls::SimpleCov::Formatter]
+
+SimpleCov.start do
+  add_filter '/spec/'
+  add_filter '/vendor/'
+  minimum_coverage(41.06)
+end
 
 $LOAD_PATH.unshift(File.expand_path('../lib', File.dirname(__FILE__)))
 
 require 'bluepill'
+require 'faker'
+require 'rspec/core'
+
+module Process
+  def self.euid
+    raise 'Process.euid should be stubbed'
+  end
+end

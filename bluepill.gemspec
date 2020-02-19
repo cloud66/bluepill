@@ -1,37 +1,26 @@
-# -*- encoding: utf-8 -*-
+lib = File.expand_path('../lib', __FILE__)
+$LOAD_PATH.unshift(lib) unless $LOAD_PATH.include?(lib)
+require 'bluepill/version'
 
-$LOAD_PATH.push File.expand_path("../lib", __FILE__)
+Gem::Specification.new do |spec|
+  spec.name        = 'bluepill'
+  spec.version     = Bluepill::Version
+  spec.platform    = Gem::Platform::RUBY
+  spec.authors     = ['Arya Asemanfar', 'Gary Tsang', 'Rohith Ravi']
+  spec.email       = ['entombedvirus@gmail.com']
+  spec.homepage    = 'http://github.com/bluepill-rb/bluepill'
+  spec.summary     = 'A process monitor written in Ruby with stability and minimalism in mind.'
+  spec.description = "Bluepill keeps your daemons up while taking up as little resources as possible. After all you probably want the resources of your server to be used by whatever daemons you are running rather than the thing that's supposed to make sure they are brought back up, should they die or misbehave."
+  spec.license     = 'MIT'
 
-require "bluepill/version"
+  spec.add_dependency 'activesupport', ['>= 3.2', '< 6']
+  spec.add_dependency 'blue-daemons', '~> 1.1'
+  spec.add_dependency 'state_machine', '~> 1.1'
+  spec.add_development_dependency 'bundler', '~> 1.3'
 
-Gem::Specification.new do |s|
-  s.name        = "cloud66-bluepill"
-  s.version     = Bluepill::VERSION.dup
-  s.platform    = Gem::Platform::RUBY
-  s.authors     = ["Arya Asemanfar", "Gary Tsang", "Rohith Ravi", "Cloud66"]
-  s.email       = ["entombedvirus@gmail.com"]
-  s.homepage    = "http://github.com/arya/bluepill"
-  s.summary     = %q{A process monitor written in Ruby with stability and minimalism in mind.}
-  s.description = %q{Bluepill keeps your daemons up while taking up as little resources as possible. After all you probably want the resources of your server to be used by whatever daemons you are running rather than the thing that's supposed to make sure they are brought back up, should they die or misbehave. Forked from http://github.com/arya/bluepill}
+  spec.required_ruby_version = '>= 1.9.3'
 
-  s.add_dependency 'daemons', ['~> 1.1.4']
-  s.add_dependency 'state_machine', '~> 1.1.0'
-  s.add_dependency 'activesupport', '~> 3.0.0'
-  s.add_dependency 'i18n', '>= 0.5.0'
-
-  s.add_development_dependency 'bundler', '>= 1.0.10'
-  s.add_development_dependency 'rake', '!= 0.9.0'
-  s.add_development_dependency 'rspec', '~> 2.12.0'
-  s.add_development_dependency 'rspec-core', '~> 2.12.0'
-  s.add_development_dependency 'rspec-expectations', '~> 2.12.0'
-  s.add_development_dependency 'rspec-mocks', '~> 2.12.0'
-  s.add_development_dependency 'faker', '~> 0.9'
-  s.add_development_dependency 'yard', '~> 0.7'
-
-  s.files            = `git ls-files`.split("\n")
-  s.test_files       = `git ls-files -- {test,spec,features}/*`.split("\n")
-  s.executables      = `git ls-files -- bin/*`.split("\n").map{ |f| File.basename(f) }
-  s.require_paths    = ["lib"]
-  s.extra_rdoc_files = ["LICENSE", "README.md"]
+  spec.files            = %w(CONTRIBUTING.md DESIGN.md LICENSE README.md bluepill.gemspec) + Dir['bin/*'] + Dir['lib/**/*.rb']
+  spec.executables      = Dir['bin/*'].collect { |f| File.basename(f) }
+  spec.require_paths    = ['lib']
 end
-

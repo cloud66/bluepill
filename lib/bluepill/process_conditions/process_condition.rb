@@ -1,4 +1,3 @@
-# -*- encoding: utf-8 -*-
 module Bluepill
   module ProcessConditions
     class ProcessCondition
@@ -6,12 +5,12 @@ module Bluepill
         @options = options
       end
 
-      def run(pid, include_children)
-        raise "Implement in subclass!"
+      def run(_pid, _include_children)
+        raise 'Implement in subclass!'
       end
 
-      def check(value)
-        raise "Implement in subclass!"
+      def check(_value)
+        raise 'Implement in subclass!'
       end
 
       def format_value(value)

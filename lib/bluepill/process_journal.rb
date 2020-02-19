@@ -2,7 +2,7 @@ require 'bluepill/system'
 
 module Bluepill
   module ProcessJournal
-    extend self
+  module_function
 
     class << self
       attr_reader :logger
@@ -13,8 +13,8 @@ module Bluepill
       end
 
       def base_dir=(base_dir)
-        @journal_base_dir ||= File.join(base_dir, "journals")
-        FileUtils.mkdir_p(@journal_base_dir) unless File.exists?(@journal_base_dir)
+        @journal_base_dir ||= File.join(base_dir, 'journals')
+        FileUtils.mkdir_p(@journal_base_dir) unless File.exist?(@journal_base_dir)
         FileUtils.chmod(0777, @journal_base_dir)
       end
     end
@@ -39,7 +39,7 @@ module Bluepill
       times += 1
       logger.debug("Waiting for lock #{name}")
       sleep 1
-      unless times >= 10
+      if times < 10
         retry
       else
         logger.info("Timeout waiting for lock #{name}")
@@ -49,13 +49,8 @@ module Bluepill
       clear_atomic_fs_lock(name)
     end
 
-    def clear_all_atomic_fs_locks(application_name = nil)
-	  if application_name.nil?
-		files = Dir['.*.lock']
-	  else
-	    files = Dir[".*.#{application_name}.lock"]
-	  end
-      files.each do |f|
+    def clear_all_atomic_fs_locks
+      Dir['.*.lock'].each do |f|
         System.delete_if_exists(f) if File.directory?(f)
       end
     end
@@ -70,7 +65,7 @@ module Bluepill
 
     def pid_journal(filename)
       logger.debug("pid journal file: #{filename}")
-      result = File.open(filename, 'r').readlines.map(&:to_i).reject {|pid| skip_pid?(pid)}
+      result = File.open(filename, 'r').readlines.collect(&:to_i).reject { |pid| skip_pid?(pid) }
       logger.debug("pid journal = #{result.join(' ')}")
       result
     rescue Errno::ENOENT
@@ -79,7 +74,7 @@ module Bluepill
 
     def pgid_journal(filename)
       logger.debug("pgid journal file: #{filename}")
-      result = File.open(filename, 'r').readlines.map(&:to_i).reject {|pgid| skip_pgid?(pgid)}
+      result = File.open(filename, 'r').readlines.collect(&:to_i).reject { |pgid| skip_pgid?(pgid) }
       logger.debug("pgid journal = #{result.join(' ')}")
       result
     rescue Errno::ENOENT
@@ -87,18 +82,15 @@ module Bluepill
     end
 
     def clear_atomic_fs_lock(name)
-      if File.directory?(name)
-        Dir.rmdir(name)
-        logger.debug("Cleared lock #{name}")
-      end
+      return unless File.directory?(name)
+      Dir.rmdir(name)
+      logger.debug("Cleared lock #{name}")
     end
 
     def kill_all_from_all_journals
-      Dir[".bluepill_pids_journal.*"].map { |x|
-        x.sub(/^\.bluepill_pids_journal\./,"")
-      }.reject { |y|
-        y =~ /\.lock$/
-      }.each do |journal_name|
+      pids = Dir['.bluepill_pids_journal.*'].collect { |p| p.sub(/^\.bluepill_pids_journal\./, '') }
+      pids.reject! { |p| p =~ /\.lock$/ }
+      pids.each do |journal_name|
         kill_all_from_journal(journal_name)
       end
     end
@@ -111,7 +103,7 @@ module Bluepill
     def kill_all_pgids_from_journal(journal_name)
       filename = pgid_journal_filename(journal_name)
       j = pgid_journal(filename)
-      if j.length > 0
+      if !j.empty?
         acquire_atomic_fs_lock(filename) do
           j.each do |pgid|
             begin
@@ -122,7 +114,7 @@ module Bluepill
             end
           end
 
-          if j.select { |pgid| System.pid_alive?(pgid) }.length > 1
+          if j.count { |pgid| System.pid_alive?(pgid) } > 1
             sleep(1)
             j.each do |pgid|
               begin
@@ -144,7 +136,7 @@ module Bluepill
     def kill_all_pids_from_journal(journal_name)
       filename = pid_journal_filename(journal_name)
       j = pid_journal(filename)
-      if j.length > 0
+      if !j.empty?
         acquire_atomic_fs_lock(filename) do
           j.each do |pid|
             begin
@@ -155,7 +147,7 @@ module Bluepill
             end
           end
 
-          if j.select { |pid| System.pid_alive?(pid) }.length > 1
+          if j.count { |pid| System.pid_alive?(pid) } > 1
             sleep(1)
             j.each do |pid|
               begin
@@ -182,13 +174,13 @@ module Bluepill
 
       filename = pgid_journal_filename(journal_name)
       acquire_atomic_fs_lock(filename) do
-        unless pgid_journal(filename).include?(pgid)
+        if pgid_journal(filename).include?(pgid)
+          logger.debug("Skipping duplicate pgid #{pgid} already in journal #{journal_name}")
+        else
           logger.debug("Saving pgid #{pgid} to process journal #{journal_name}")
           File.open(filename, 'a+', 0600) { |f| f.puts(pgid) }
           logger.info("Saved pgid #{pgid} to journal #{journal_name}")
           logger.debug("Journal now = #{File.open(filename, 'r').read}")
-        else
-          logger.debug("Skipping duplicate pgid #{pgid} already in journal #{journal_name}")
         end
       end
     end
@@ -205,13 +197,13 @@ module Bluepill
 
       filename = pid_journal_filename(journal_name)
       acquire_atomic_fs_lock(filename) do
-        unless pid_journal(filename).include?(pid)
+        if pid_journal(filename).include?(pid)
+          logger.debug("Skipping duplicate pid #{pid} already in journal #{journal_name}")
+        else
           logger.debug("Saving pid #{pid} to process journal #{journal_name}")
           File.open(filename, 'a+', 0600) { |f| f.puts(pid) }
           logger.info("Saved pid #{pid} to journal #{journal_name}")
           logger.debug("Journal now = #{File.open(filename, 'r').read}")
-        else
-          logger.debug("Skipping duplicate pid #{pid} already in journal #{journal_name}")
         end
       end
     end
